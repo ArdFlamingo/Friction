@@ -1,6 +1,6 @@
 #include "game.h"
 #include "tileType.h"
-#include "mapData.h"
+#include "Maps.h"
 #include "sprites.h"
 #include "player.h"
 #include "camera.h"
@@ -31,21 +31,33 @@ void Game::update()
     switch(gameState)
     {
         case GameState::Title:
-            if (arduboy.justPressed(A_BUTTON)) {gameState = GameState::Game;}
-                break;
+        {
+            if (arduboy.justPressed(A_BUTTON))
+                gameState = GameState::Game;
+
+            break;
+        }
 
         case GameState::Game:
+        {
             updateGame();
             drawMap();
             player.updatePlayer();
             camera.updateCamera();
             player.drawPlayer();
 
-            if (arduboy.justPressed(A_BUTTON)) {MapData::data = MapData::map1Data;}
-                break;
+            // When A is pressed
+            if (arduboy.justPressed(A_BUTTON))
+                // Select the next map
+                this->selectNextMap();
+
+            break;
+        }
 
         case GameState::Gameover:
-                break;
+        {
+            break;
+        }
     }
 }
 
@@ -56,26 +68,34 @@ void Game::updateGame()
 
 void Game::drawMap()
 {
-    for(uint8_t tileY = 0; tileY < MapData::mapHeight; ++tileY)
+    // Make a reference to the current map
+    auto & map = this->getCurrentMap();
+
+    // Loop through all tiles
+    for(uint8_t tileY = 0; tileY < map.getHeight(); ++tileY)
     {
         int16_t drawY = ((tileY * tileHeight) - camera.y);
 
-        if ((drawY < -tileHeight) || (drawY > HEIGHT))
-
+        // If the tile is off screen
+        if ((drawY < -tileHeight) || (drawY > arduboy.height()))
+            // Skip it
             continue;
 
-        for(uint8_t tileX = 0; tileX < MapData::mapWidth; ++tileX)
+        for(uint8_t tileX = 0; tileX < map.getWidth(); ++tileX)
         {
             int16_t drawX = ((tileX * tileWidth) - camera.x);
 
-            if((drawX < -tileWidth) || (drawX > WIDTH))
-
+            // If the tile is off screen
+            if((drawX < -tileWidth) || (drawX > arduboy.width()))
                 continue;
 
-            TileType tileType = readTileTypeFromProgmem(MapData::data[tileY][tileX]);
+            // Get the tile
+            TileType tileType = map.getTile(tileX, tileY);
 
+            // Get the corresponding index
             uint8_t tileIndex = getTileIndex(tileType);
 
+            // Draw the tile
             Sprites::drawSelfMasked(drawX, drawY, mapTiles, tileIndex);
         }
     }

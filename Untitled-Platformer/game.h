@@ -1,29 +1,71 @@
 #pragma once
+
 #include <stdint.h>
 #include <Arduboy2.h>
 
+#include "Map.h"
+#include "Maps.h"
+
 class Game
 {
-    private:
+private:
+    uint8_t currentMapIndex = 0;
 
-        void update();
+public:
+    Arduboy2 arduboy;
 
-        void updateGame();
-        void drawMap();
+    enum class GameState : uint8_t
+    {
+        Title,
+        Game,
+        Gameover
+    };
 
-    public:
+    void setup();
+    void loop();
 
-        enum class GameState : uint8_t
-        {
-            Title,
-            Game,
-            Gameover
-        };
+    const Map & getCurrentMap() const
+    {
+        return maps[this->currentMapIndex];
+    }
 
-        void setup();
-        void loop();
+    // Selects the specified map, even if it's invalid
+    void selectMap(uint8_t mapIndex)
+    {
+        this->currentMapIndex = mapIndex;
+    }
 
-        Arduboy2 arduboy;
+    // A safer version of selectMap
+    bool trySelectMap(uint8_t mapIndex)
+    {
+        if(mapIndex >= totalMaps)
+            return false;
+
+        this->currentMapIndex = mapIndex;
+        return true;
+    }
+
+    // Selects the next map
+    void selectNextMap()
+    {
+        if(this->currentMapIndex < lastMapIndex)
+            ++this->currentMapIndex;
+    }
+
+    // Same as selectNextMap, but reports success
+    bool trySelectNextMap()
+    {
+        if(this->currentMapIndex == lastMapIndex)
+            return false;
+
+        ++this->currentMapIndex;
+        return true;
+    }
+
+private:
+    void update();
+    void updateGame();
+    void drawMap();
 };
 
 extern Game game;
